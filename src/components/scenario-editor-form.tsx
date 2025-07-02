@@ -94,7 +94,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
     onSave(finalData);
   };
 
-  const allParamNames = [...form.watch('initialClinicalParams' as any), ...form.watch('initialLabParams' as any)].map(p => p.name).filter(Boolean);
+  const allParamNames = [...new Set([...form.watch('initialClinicalParams' as any), ...form.watch('initialLabParams' as any)].map(p => p.name).filter(Boolean))];
 
   return (
     <Form {...form}>
@@ -212,10 +212,21 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                             <CardDescription>Define how this intervention affects patient parameters.</CardDescription>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                                 {allParamNames.map((paramName) => (
-                                    <FormField key={paramName} control={form.control} name={`availableInterventions.${index}.effects.${paramName}`} defaultValue={0} render={({ field }) => (
+                                    <FormField
+                                        key={paramName}
+                                        control={form.control}
+                                        name={`availableInterventions.${index}.effects.${paramName}`}
+                                        render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>{paramName}</FormLabel>
-                                            <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    step="0.1"
+                                                    {...field}
+                                                    value={field.value ?? ''}
+                                                />
+                                            </FormControl>
                                         </FormItem>
                                     )} />
                                 ))}
