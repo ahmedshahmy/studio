@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { GameStatus } from '@/lib/types';
 import { Award, Frown, Hourglass, Skull, Wallet } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const outcomes = {
   won: {
@@ -33,7 +34,7 @@ const outcomes = {
   },
   lost_death: {
     title: 'Patient Lost',
-    description: 'The patient\'s condition deteriorated beyond recovery.',
+    description: 'The patient\\'s condition deteriorated beyond recovery.',
     Icon: Skull,
     color: 'text-destructive',
   },
