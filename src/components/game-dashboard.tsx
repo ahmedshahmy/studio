@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { User, HeartPulse, FlaskConical, CircleDollarSign, Timer, ListCollapse, Pill } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -106,14 +106,14 @@ export function GameDashboard({ scenario, onGameOver }: { scenario: Scenario; on
                                  <CardHeader className="flex flex-row items-center gap-2">
                                     <FlaskConical className="w-5 h-5 text-primary"/>
                                     <CardTitle className="text-lg">Laboratory Results</CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex-1 overflow-hidden">
+                                 </CardHeader>
+                                 <CardContent className="flex-1 overflow-hidden">
                                      <ScrollArea className="h-full">
                                         <div className="space-y-2 pr-4">
                                             {Object.entries(labParams).map(([key, param]) => <ParameterItem key={key} name={key} param={param} />)}
                                         </div>
                                     </ScrollArea>
-                                </CardContent>
+                                 </CardContent>
                              </Card>
                          </div>
                     </div>
@@ -141,7 +141,7 @@ export function GameDashboard({ scenario, onGameOver }: { scenario: Scenario; on
                                 </Select>
                                  <Button className="w-full" onClick={handleApplyIntervention} disabled={!selectedIntervention}>
                                     Apply Intervention
-                                </Button>
+                                 </Button>
                             </CardContent>
                         </Card>
                         <Card className="flex-1 flex flex-col overflow-hidden">
