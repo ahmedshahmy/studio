@@ -37,7 +37,8 @@ const interventionSchema = z.object({
   name: z.string().min(1),
   cost: z.coerce.number().min(0),
   description: z.string(),
-  effects: z.record(z.string(), z.coerce.number()),
+  // Allow strings for a better editing experience. This will be parsed in onSubmit.
+  effects: z.record(z.string(), z.string().optional()),
 });
 
 const scenarioSchema = z.object({
@@ -78,6 +79,11 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
         ...scenario,
         initialClinicalParams: paramsToArray(scenario.initialClinicalParams),
         initialLabParams: paramsToArray(scenario.initialLabParams),
+        // Convert effects numbers to strings for form editing
+        availableInterventions: scenario.availableInterventions.map(iv => ({
+            ...iv,
+            effects: Object.fromEntries(Object.entries(iv.effects).map(([k, v]) => [k, String(v)]))
+        }))
     },
   });
 
@@ -86,10 +92,28 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
   const { fields: interventionFields, append: appendIntervention, remove: removeIntervention } = useFieldArray({ control: form.control, name: "availableInterventions" });
 
   const onSubmit = (data: any) => {
+    // Manually parse intervention effects from string to number, filtering empty/invalid ones.
+    const parsedInterventions = data.availableInterventions.map((intervention: any) => {
+        const parsedEffects: Record<string, number> = {};
+        if (intervention.effects) {
+            for (const key in intervention.effects) {
+                const value = intervention.effects[key];
+                if (value) { // handles undefined, null, ''
+                    const num = parseFloat(value);
+                    if (!isNaN(num)) {
+                        parsedEffects[key] = num;
+                    }
+                }
+            }
+        }
+        return { ...intervention, effects: parsedEffects };
+    });
+
     const finalData = {
         ...data,
         initialClinicalParams: arrayToParams(data.initialClinicalParams),
         initialLabParams: arrayToParams(data.initialLabParams),
+        availableInterventions: parsedInterventions,
     };
     onSave(finalData);
   };
@@ -159,7 +183,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                        <FormField control={form.control} name={`initialClinicalParams.${index}.normalRange.0`} render={({ field }) => (<FormItem><FormLabel>Normal Min</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                        <FormField control={form.control} name={`initialClinicalParams.${index}.normalRange.1`} render={({ field }) => (<FormItem><FormLabel>Normal Max</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                        <div className="flex items-center gap-2">
-                           <FormField control={form.control} name={`initialClinicalParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl></FormItem>)} />
+                           <FormField control={form.control} name={`initialClinicalParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
                            <Button type="button" variant="destructive" size="icon" onClick={() => removeClinical(index)}><Trash/></Button>
                        </div>
                     </div>
@@ -176,12 +200,12 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                  {labFields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 p-3 border rounded-md items-end">
                        <FormField control={form.control} name={`initialLabParams.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} placeholder="Creatinine" /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialLabParams.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
                        <FormField control={form.control} name={`initialLabParams.${index}.unit`} render={({ field }) => (<FormItem><FormLabel>Unit</FormLabel><FormControl><Input {...field} placeholder="mg/dL"/></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.0`} render={({ field }) => (<FormItem><FormLabel>Normal Min</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.1`} render={({ field }) => (<FormItem><FormLabel>Normal Max</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.0`} render={({ field }) => (<FormItem><FormLabel>Normal Min</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.1`} render={({ field }) => (<FormItem><FormLabel>Normal Max</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
                        <div className="flex items-center gap-2">
-                           <FormField control={form.control} name={`initialLabParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="0.001" {...field} /></FormControl></FormItem>)} />
+                           <FormField control={form.control} name={`initialLabParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
                            <Button type="button" variant="destructive" size="icon" onClick={() => removeLab(index)}><Trash/></Button>
                        </div>
                     </div>
@@ -222,7 +246,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                                             <FormControl>
                                                 <Input
                                                     type="number"
-                                                    step="0.1"
+                                                    step="any"
                                                     {...field}
                                                     value={field.value ?? ''}
                                                 />
