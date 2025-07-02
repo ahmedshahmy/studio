@@ -16,10 +16,16 @@ export default function EditorPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const storedScenarios = localStorage.getItem('nephrosim-scenarios');
-    if (storedScenarios) {
-      setScenarios(JSON.parse(storedScenarios));
-    } else {
+    try {
+      const storedScenarios = localStorage.getItem('nephrosim-scenarios');
+      if (storedScenarios) {
+        setScenarios(JSON.parse(storedScenarios));
+      } else {
+        setScenarios(defaultScenarios);
+        localStorage.setItem('nephrosim-scenarios', JSON.stringify(defaultScenarios));
+      }
+    } catch (error) {
+      console.error("Failed to parse scenarios from localStorage", error);
       setScenarios(defaultScenarios);
       localStorage.setItem('nephrosim-scenarios', JSON.stringify(defaultScenarios));
     }

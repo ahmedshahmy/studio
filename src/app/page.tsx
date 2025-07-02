@@ -56,13 +56,20 @@ export default function Home() {
 
   useEffect(() => {
     // This runs only on the client, where localStorage is available.
-    const storedScenarios = localStorage.getItem('nephrosim-scenarios');
-    if (storedScenarios) {
-      setScenarios(JSON.parse(storedScenarios));
-    } else {
-      // If nothing is in localStorage, initialize with default scenarios
-      setScenarios(defaultScenarios);
-      localStorage.setItem('nephrosim-scenarios', JSON.stringify(defaultScenarios));
+    try {
+      const storedScenarios = localStorage.getItem('nephrosim-scenarios');
+      if (storedScenarios) {
+        setScenarios(JSON.parse(storedScenarios));
+      } else {
+        // If nothing is in localStorage, initialize with default scenarios
+        setScenarios(defaultScenarios);
+        localStorage.setItem('nephrosim-scenarios', JSON.stringify(defaultScenarios));
+      }
+    } catch (error) {
+        console.error("Failed to parse scenarios from localStorage", error);
+        // Fallback to default scenarios if parsing fails
+        setScenarios(defaultScenarios);
+        localStorage.setItem('nephrosim-scenarios', JSON.stringify(defaultScenarios));
     }
   }, []);
 

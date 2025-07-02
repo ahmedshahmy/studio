@@ -29,7 +29,7 @@ export const useGameEngine = (scenario: Scenario, onGameOver: (status: GameStatu
       setLog(prevLog => [{ time: currentTime, message, type }, ...prevLog.slice(0, 49)]);
       return currentTime;
     });
-  }, []);
+  }, [setLog, setTimeLeft]);
 
   // Main game loop
   useEffect(() => {

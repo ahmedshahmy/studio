@@ -34,7 +34,7 @@ const outcomes = {
   },
   lost_death: {
     title: 'Patient Lost',
-    description: 'The patient\\'s condition deteriorated beyond recovery.',
+    description: "The patient's condition deteriorated beyond recovery.",
     Icon: Skull,
     color: 'text-destructive',
   },
@@ -61,9 +61,8 @@ export function GameOverDialog({ status, onRestart }: { status: GameStatus; onRe
         <AlertDialogHeader className="items-center text-center">
           <Icon className={cn("h-16 w-16 mb-4", color)} />
           <AlertDialogTitle className="text-2xl">{title}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {description}
-          </AlertDialogDescription>
+
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogAction onClick={onRestart} className="w-full">
