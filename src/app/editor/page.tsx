@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Scenario } from '@/lib/types';
+import type { Scenario } from '@/lib/types';
 import { scenarios as defaultScenarios } from '@/lib/scenarios';
 import { ScenarioEditorForm } from '@/components/scenario-editor-form';
 import { Button } from '@/components/ui/button';
@@ -56,8 +56,8 @@ export default function EditorPage() {
     const newScenarioTemplate: Scenario = {
       id: newId,
       title: 'New Custom Scenario',
-      description: '',
-      patient: { name: '', age: 0, sex: 'Male', history: '' },
+      description: 'A brief description of this new clinical case. Please edit.',
+      patient: { name: 'New Patient', age: 50, sex: 'Male', history: 'Patient has a history of...' },
       initialBudget: 5000,
       timeLimit: 300,
       initialClinicalParams: {},

@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/alert-dialog"
 
 // Zod schemas for validation
-const parameterSchema = z.object({
+
+const formParameterSchema = z.object({
+  name: z.string().min(1, 'Parameter name is required.'),
   value: z.coerce.number(),
   unit: z.string().min(1),
   normalRange: z.tuple([z.coerce.number(), z.coerce.number()]),
@@ -42,7 +44,7 @@ const interventionSchema = z.object({
   effects: z.record(z.string(), z.string().optional()),
 });
 
-const scenarioSchema = z.object({
+const scenarioFormSchema = z.object({
   id: z.string(),
   title: z.string().min(3, 'Title is required.'),
   description: z.string().min(10, 'Description is required.'),
@@ -54,8 +56,8 @@ const scenarioSchema = z.object({
   }),
   initialBudget: z.coerce.number().min(0),
   timeLimit: z.coerce.number().min(1),
-  initialClinicalParams: z.record(z.string(), parameterSchema),
-  initialLabParams: z.record(z.string(), parameterSchema),
+  initialClinicalParams: z.array(formParameterSchema),
+  initialLabParams: z.array(formParameterSchema),
   availableInterventions: z.array(interventionSchema),
 });
 
@@ -74,8 +76,8 @@ const arrayToParams = (arr: {name: string, value: number, unit: string, normalRa
 }
 
 export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { scenario: Scenario, onSave: (data: Scenario) => void, onCancel: () => void, onDelete: (id: string) => void }) {
-  const form = useForm({
-    resolver: zodResolver(scenarioSchema),
+  const form = useForm<z.infer<typeof scenarioFormSchema>>({
+    resolver: zodResolver(scenarioFormSchema),
     defaultValues: {
         ...scenario,
         initialClinicalParams: paramsToArray(scenario.initialClinicalParams),
@@ -88,13 +90,13 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
     },
   });
 
-  const { fields: clinicalFields, append: appendClinical, remove: removeClinical } = useFieldArray({ control: form.control, name: "initialClinicalParams" as any });
-  const { fields: labFields, append: appendLab, remove: removeLab } = useFieldArray({ control: form.control, name: "initialLabParams" as any });
+  const { fields: clinicalFields, append: appendClinical, remove: removeClinical } = useFieldArray({ control: form.control, name: "initialClinicalParams" });
+  const { fields: labFields, append: appendLab, remove: removeLab } = useFieldArray({ control: form.control, name: "initialLabParams" });
   const { fields: interventionFields, append: appendIntervention, remove: removeIntervention } = useFieldArray({ control: form.control, name: "availableInterventions" });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: z.infer<typeof scenarioFormSchema>) => {
     // Manually parse intervention effects from string to number, filtering empty/invalid ones.
-    const parsedInterventions = data.availableInterventions.map((intervention: any) => {
+    const parsedInterventions = data.availableInterventions.map((intervention) => {
         const parsedEffects: Record<string, number> = {};
         if (intervention.effects) {
             for (const key in intervention.effects) {
@@ -110,7 +112,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
         return { ...intervention, effects: parsedEffects };
     });
 
-    const finalData = {
+    const finalData: Scenario = {
         ...data,
         initialClinicalParams: arrayToParams(data.initialClinicalParams),
         initialLabParams: arrayToParams(data.initialLabParams),
@@ -119,7 +121,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
     onSave(finalData);
   };
 
-  const allParamNames = [...new Set([...form.watch('initialClinicalParams' as any), ...form.watch('initialLabParams' as any)].map(p => p.name).filter(Boolean))];
+  const allParamNames = [...new Set([...form.watch('initialClinicalParams'), ...form.watch('initialLabParams')].map(p => p.name).filter(Boolean))];
 
   const handleAddIntervention = () => {
     const newEffects: Record<string, string> = {};
@@ -129,7 +131,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
     });
     
     appendIntervention({
-      id: `new-intervention-${Date.now()}`, // Add a unique default ID to pass validation
+      id: `new-intervention-${Date.now()}`,
       name: '',
       cost: 0,
       description: '',
@@ -195,13 +197,13 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
             <CardContent className="space-y-4">
                 {clinicalFields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 p-3 border rounded-md items-end">
-                       <FormField control={form.control} name={`initialClinicalParams.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} placeholder="Heart Rate" /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialClinicalParams.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialClinicalParams.${index}.unit`} render={({ field }) => (<FormItem><FormLabel>Unit</FormLabel><FormControl><Input {...field} placeholder="bpm"/></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialClinicalParams.${index}.normalRange.0`} render={({ field }) => (<FormItem><FormLabel>Normal Min</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialClinicalParams.${index}.normalRange.1`} render={({ field }) => (<FormItem><FormLabel>Normal Max</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                       <FormField control={form.control} name={`initialClinicalParams.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} placeholder="Heart Rate" /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialClinicalParams.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialClinicalParams.${index}.unit`} render={({ field }) => (<FormItem><FormLabel>Unit</FormLabel><FormControl><Input {...field} placeholder="bpm"/></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialClinicalParams.${index}.normalRange.0`} render={({ field }) => (<FormItem><FormLabel>Normal Min</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialClinicalParams.${index}.normalRange.1`} render={({ field }) => (<FormItem><FormLabel>Normal Max</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <div className="flex items-center gap-2">
-                           <FormField control={form.control} name={`initialClinicalParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
+                           <FormField control={form.control} name={`initialClinicalParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>)} />
                            <Button type="button" variant="destructive" size="icon" onClick={() => removeClinical(index)}><Trash/></Button>
                        </div>
                     </div>
@@ -217,13 +219,13 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
             <CardContent className="space-y-4">
                  {labFields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 p-3 border rounded-md items-end">
-                       <FormField control={form.control} name={`initialLabParams.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} placeholder="Creatinine" /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialLabParams.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialLabParams.${index}.unit`} render={({ field }) => (<FormItem><FormLabel>Unit</FormLabel><FormControl><Input {...field} placeholder="mg/dL"/></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.0`} render={({ field }) => (<FormItem><FormLabel>Normal Min</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
-                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.1`} render={({ field }) => (<FormItem><FormLabel>Normal Max</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} placeholder="Creatinine" /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.unit`} render={({ field }) => (<FormItem><FormLabel>Unit</FormLabel><FormControl><Input {...field} placeholder="mg/dL"/></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.0`} render={({ field }) => (<FormItem><FormLabel>Normal Min</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={form.control} name={`initialLabParams.${index}.normalRange.1`} render={({ field }) => (<FormItem><FormLabel>Normal Max</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <div className="flex items-center gap-2">
-                           <FormField control={form.control} name={`initialLabParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl></FormItem>)} />
+                           <FormField control={form.control} name={`initialLabParams.${index}.deteriorationRate`} render={({ field }) => (<FormItem className="flex-1"><FormLabel>Deterioration/sec</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>)} />
                            <Button type="button" variant="destructive" size="icon" onClick={() => removeLab(index)}><Trash/></Button>
                        </div>
                     </div>
@@ -244,11 +246,11 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                              <Button type="button" variant="destructive" size="icon" onClick={() => removeIntervention(index)}><Trash/></Button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                             <FormField control={form.control} name={`availableInterventions.${index}.id`} render={({ field }) => (<FormItem><FormLabel>ID</FormLabel><FormControl><Input {...field} placeholder="ivf-bolus"/></FormControl></FormItem>)} />
-                             <FormField control={form.control} name={`availableInterventions.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} placeholder="IV Fluid Bolus (500ml)"/></FormControl></FormItem>)} />
-                             <FormField control={form.control} name={`availableInterventions.${index}.cost`} render={({ field }) => (<FormItem><FormLabel>Cost ($)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                             <FormField control={form.control} name={`availableInterventions.${index}.id`} render={({ field }) => (<FormItem><FormLabel>ID</FormLabel><FormControl><Input {...field} placeholder="ivf-bolus"/></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={form.control} name={`availableInterventions.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} placeholder="IV Fluid Bolus (500ml)"/></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={form.control} name={`availableInterventions.${index}.cost`} render={({ field }) => (<FormItem><FormLabel>Cost ($)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
-                         <FormField control={form.control} name={`availableInterventions.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl></FormItem>)} />
+                         <FormField control={form.control} name={`availableInterventions.${index}.description`} render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <div>
                             <Label>Effects</Label>
                             <CardDescription>Define how this intervention affects patient parameters.</CardDescription>
@@ -269,6 +271,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                                                     placeholder="e.g. -0.5 or 10"
                                                 />
                                             </FormControl>
+                                            <FormMessage />
                                         </FormItem>
                                     )} />
                                 ))}
