@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Scenario, GameStatus, PatientParameters, GameEvent, Intervention } from '@/lib/types';
-import { cloneDeep } from 'lodash';
 
 // Using a more robust cloning method
 const deepClone = <T>(obj: T): T => {
