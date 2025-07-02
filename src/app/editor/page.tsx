@@ -19,11 +19,14 @@ export default function EditorPage() {
     try {
       const storedScenarios = localStorage.getItem('nephrosim-scenarios');
       if (storedScenarios) {
-        setScenarios(JSON.parse(storedScenarios));
-      } else {
-        setScenarios(defaultScenarios);
-        localStorage.setItem('nephrosim-scenarios', JSON.stringify(defaultScenarios));
+        const parsed = JSON.parse(storedScenarios);
+        if (Array.isArray(parsed)) {
+            setScenarios(parsed);
+            return;
+        }
       }
+      setScenarios(defaultScenarios);
+      localStorage.setItem('nephrosim-scenarios', JSON.stringify(defaultScenarios));
     } catch (error) {
       console.error("Failed to parse scenarios from localStorage", error);
       setScenarios(defaultScenarios);
@@ -107,7 +110,10 @@ export default function EditorPage() {
                   <p className="font-semibold">{scenario.title}</p>
                   <p className="text-sm text-muted-foreground">{scenario.description}</p>
                 </div>
-                <Button variant="secondary" onClick={() => setSelectedScenario(scenario)}>Edit</Button>
+                <div className="flex items-center gap-2">
+                    {!scenario.id.startsWith('custom-') && <span className="text-xs text-muted-foreground">(Default)</span>}
+                    <Button variant="secondary" onClick={() => setSelectedScenario(scenario)}>Edit</Button>
+                </div>
               </div>
             ))}
           </div>

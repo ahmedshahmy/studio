@@ -98,7 +98,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
         if (intervention.effects) {
             for (const key in intervention.effects) {
                 const value = intervention.effects[key];
-                if (value) { // handles undefined, null, ''
+                if (value !== null && value !== undefined && value !== '') {
                     const num = parseFloat(value);
                     if (!isNaN(num)) {
                         parsedEffects[key] = num;
@@ -245,10 +245,10 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                                             <FormLabel>{paramName}</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    type="number"
-                                                    step="any"
+                                                    type="text"
                                                     {...field}
                                                     value={field.value ?? ''}
+                                                    placeholder="e.g. -0.5 or 10"
                                                 />
                                             </FormControl>
                                         </FormItem>
@@ -265,7 +265,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
         <CardFooter className="flex justify-between">
             <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Delete Scenario</Button>
+                    <Button variant="destructive" disabled={!scenario.id.startsWith('custom-') }>Delete Scenario</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
