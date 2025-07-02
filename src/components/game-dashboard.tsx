@@ -37,7 +37,7 @@ function ParameterItem({ name, param }: { name: string; param: any }) {
             <span className="font-medium text-sm">{name}</span>
             <div className="text-right">
                 <span className={cn("text-lg font-bold tabular-nums", !isNormal && "text-destructive")}>
-                    {param.value.toFixed(param.unit === '°C' || param.unit === 'mg/dL' ? 1 : 0)}
+                    {param.value.toFixed(param.unit === '°C' || param.unit === 'mg/dL' ? 1 : 2)}
                 </span>
                 <span className="text-xs text-muted-foreground ml-1">{param.unit}</span>
                 <p className="text-xs text-muted-foreground">({param.normalRange[0]} - {param.normalRange[1]})</p>
