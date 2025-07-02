@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
@@ -120,6 +121,23 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
 
   const allParamNames = [...new Set([...form.watch('initialClinicalParams' as any), ...form.watch('initialLabParams' as any)].map(p => p.name).filter(Boolean))];
 
+  const handleAddIntervention = () => {
+    const newEffects: Record<string, string> = {};
+    // Pre-populate effects for all existing parameters to ensure fields are registered
+    allParamNames.forEach(paramName => {
+      newEffects[paramName] = '';
+    });
+    
+    appendIntervention({
+      id: `new-intervention-${Date.now()}`, // Add a unique default ID to pass validation
+      name: '',
+      cost: 0,
+      description: '',
+      effects: newEffects,
+    });
+  };
+
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -237,7 +255,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                                 {allParamNames.map((paramName) => (
                                     <FormField
-                                        key={paramName}
+                                        key={`${field.id}-${paramName}`}
                                         control={form.control}
                                         name={`availableInterventions.${index}.effects.${paramName}`}
                                         render={({ field }) => (
@@ -258,7 +276,7 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
                         </div>
                     </div>
                 ))}
-                 <Button type="button" variant="outline" onClick={() => appendIntervention({ id: '', name: '', cost: 0, description: '', effects: {} })}><PlusCircle className="mr-2"/>Add Intervention</Button>
+                 <Button type="button" variant="outline" onClick={handleAddIntervention}><PlusCircle className="mr-2"/>Add Intervention</Button>
             </CardContent>
         </Card>
 
@@ -289,3 +307,5 @@ export function ScenarioEditorForm({ scenario, onSave, onCancel, onDelete }: { s
     </Form>
   );
 }
+
+    
